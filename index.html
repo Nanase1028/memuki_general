@@ -139,11 +139,37 @@
   button#submit:active{transform:scale(.98);}
 
   /* done screen */
-  #done{display:none;text-align:center;padding:80px 24px;}
+  #done{display:none;text-align:center;padding:56px 24px 80px;}
   #done .check{font-size:48px;}
   #done h2{font-size:22px;margin:14px 0 8px;}
   #done p{color:var(--ink-soft);font-size:14.5px;}
   #done button{margin-top:20px;background:#fff;border:1px solid var(--line);color:var(--accent-ink);font-family:inherit;font-size:14px;padding:11px 20px;border-radius:10px;cursor:pointer;}
+
+  #feedback{max-width:560px;margin:28px auto 8px;text-align:left;}
+  .fb-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 18px 16px;margin-bottom:16px;}
+  .fb-card h3{font-size:15.5px;margin:0 0 4px;color:var(--ink);}
+  .fb-card .fb-desc{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.6;}
+  .fb-row{margin:10px 0;}
+  .fb-rowhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .fb-name{font-size:13px;font-weight:600;color:var(--ink);}
+  .fb-val{font-size:12.5px;color:var(--accent-ink);font-weight:700;}
+  .fb-track{height:12px;border-radius:99px;background:var(--accent-soft);overflow:hidden;}
+  .fb-fill{height:100%;border-radius:99px;background:var(--accent);width:0;transition:width .8s cubic-bezier(.2,.7,.2,1);}
+  .fb-band{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:2px 9px;margin-top:2px;}
+  .fb-scalehint{font-size:11px;color:var(--ink-soft);margin-top:8px;}
+  .fb-disclaimer{max-width:560px;margin:8px auto 0;font-size:11.5px;color:var(--ink-soft);line-height:1.6;}
+  .fb-rec{border-radius:var(--radius);padding:18px 18px 16px;margin-bottom:18px;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);}
+  .fb-rec h3{font-size:15.5px;margin:0 0 8px;}
+  .fb-rec p{font-size:13.5px;line-height:1.75;margin:0;color:var(--ink);}
+  .fb-rec ul{margin:10px 0 0;padding-left:1.2em;font-size:13px;color:var(--ink);line-height:1.7;}
+  .fb-rec.rec-urgent{border-color:#C2624A;background:#FBEFEA;}
+  .fb-rec.rec-urgent h3{color:#9A4631;}
+  .fb-rec.rec-recommend{border-color:var(--accent);background:var(--accent-soft);}
+  .fb-rec.rec-recommend h3{color:var(--accent-ink);}
+  .fb-rec.rec-mild h3, .fb-rec.rec-none h3{color:var(--ink);}
+  .fb-rec .lead{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;border-radius:6px;padding:2px 9px;margin-bottom:8px;}
+  .fb-rec.rec-urgent .lead{background:#C2624A;}
+  .fb-rec.rec-recommend .lead{background:var(--accent);}
 
   @media (max-width:430px){
     .opt .lab{font-size:9.5px;}
@@ -165,7 +191,9 @@
 <div id="done">
   <div class="check">✓</div>
   <h2>ご回答ありがとうございました</h2>
-  <p>回答が記録されました。このページは閉じていただいて構いません。</p>
+  <p>回答が記録されました。下に簡単な結果のフィードバックを表示しています。</p>
+  <div id="feedback"></div>
+  <p class="fb-disclaimer">※ これは研究目的の参考情報であり、診断や評価ではありません。スコアは一般的な傾向の目安です。</p>
   <button onclick="location.reload()">最初に戻る</button>
 </div>
 
@@ -185,7 +213,20 @@
    空のままにすると、送信時に回答を CSV ファイルとして
    ダウンロードします（バックアップ用）。
    ============================================================ */
-const GAS_ENDPOINT = "";   // 例: "https://script.google.com/macros/s/XXXX/exec"
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwiSx7IoddSfoRyps_pp0L0zBBKJwIXgirWA3ckxXY9G64yIt5W7aOHsbB3wYv32FHLbQ/exec";
+
+/* ============================================================
+   設定（researcher）: 受診リコメンドの文言・連絡先
+   ------------------------------------------------------------
+   外来でこのアンケートを実施する前提の「ご相談のおすすめ」を、
+   PHQ-9 / GAD-7 のスコアに応じて完了画面に表示します。
+   ★しきい値・文言は必ず院内ルール／研究計画に合わせて確認してください。
+   ============================================================ */
+const CLINIC = {
+  show: true,                 // 受診リコメンドを表示するか（false で非表示）
+  clinicContact: "",          // 院内の緊急・相談連絡先（例: "◯◯クリニック 03-xxxx-xxxx"）。空なら非表示
+  hotline: "よりそいホットライン：0120-279-338（24時間・通話無料）"  // 一般の相談窓口
+};
 
 /* ---- 尺度データ（本文に項目があったものを収録）---- */
 const SCALES = [
@@ -684,12 +725,147 @@ function downloadCSV(data){
   a.download = `survey_${data.participant_id||"response"}_${Date.now()}.csv`;
   document.body.appendChild(a); a.click(); a.remove();
 }
-function showDone(){
+function showDone(data){
+  if(data) renderFeedback(data);
   document.querySelector(".wrap#form-root, main.wrap").style.display="none";
   document.getElementById("progress-wrap").style.display="none";
   document.getElementById("footer").style.display="none";
   document.getElementById("done").style.display="block";
   window.scrollTo(0,0);
+}
+
+/* ---- 結果フィードバック（採点 + 棒グラフ）---- */
+function num(d,k){ const v=Number(d[k]); return isNaN(v)?null:v; }
+
+function bar(name, score, min, max, valLabel){
+  const pct = Math.max(0, Math.min(100, ((score-min)/(max-min))*100));
+  return `<div class="fb-row">
+    <div class="fb-rowhead"><span class="fb-name">${name}</span><span class="fb-val">${valLabel}</span></div>
+    <div class="fb-track"><div class="fb-fill" style="width:0" data-w="${pct.toFixed(1)}"></div></div>
+  </div>`;
+}
+function card(title, desc, rowsHtml, hint){
+  return `<div class="fb-card"><h3>${title}</h3><p class="fb-desc">${desc}</p>${rowsHtml}${hint?`<p class="fb-scalehint">${hint}</p>`:""}</div>`;
+}
+
+/* ---- 受診リコメンド ---- */
+function buildRecommendation(d){
+  if(!CLINIC.show) return "";
+  // PHQ-9 / GAD-7 が無ければ何も出さない
+  if(num(d,"phq_1")===null && num(d,"gad_1")===null) return "";
+
+  let phq=0, hasPhq=false;
+  for(let i=1;i<=9;i++){ const v=num(d,"phq_"+i); if(v!==null){ phq+=v; hasPhq=true; } }
+  let gad=0, hasGad=false;
+  for(let i=1;i<=7;i++){ const v=num(d,"gad_"+i); if(v!==null){ gad+=v; hasGad=true; } }
+  const item9 = num(d,"phq_9");
+
+  // しきい値（標準的な目安。★院内ルールに合わせて調整可）
+  let level;
+  if(item9 !== null && item9 >= 1) level = "urgent";
+  else if((hasPhq && phq>=10) || (hasGad && gad>=10)) level = "recommend";
+  else if((hasPhq && phq>=5) || (hasGad && gad>=5)) level = "mild";
+  else level = "none";
+
+  const contact = CLINIC.clinicContact ? `<li>院内の連絡先：${CLINIC.clinicContact}</li>` : "";
+  const hotline = CLINIC.hotline ? `<li>${CLINIC.hotline}</li>` : "";
+
+  if(level==="urgent"){
+    return `<div class="fb-rec rec-urgent">
+      <span class="lead">大切なお願い</span>
+      <h3>よろしければ、本日スタッフにお声がけください</h3>
+      <p>今回のご回答には、気分の落ち込みやつらいお気持ちに関する項目が含まれていました。おひとりで抱え込まず、本日の外来で主治医・スタッフにお伝えのうえ、お話しいただけますか。今すぐ話を聞いてほしいときは、下記もご利用いただけます。</p>
+      <ul><li>本日の外来スタッフ・主治医</li>${contact}${hotline}</ul>
+    </div>`;
+  }
+  if(level==="recommend"){
+    return `<div class="fb-rec rec-recommend">
+      <span class="lead">ご相談のおすすめ</span>
+      <h3>外来で主治医・スタッフにご相談ください</h3>
+      <p>ご回答からは、気分や不安の面でご負担を感じておられる可能性がうかがえます。よろしければ、本日の外来で主治医・スタッフにご相談ください。早めにお話しいただくことで、ご自身に合ったサポートを受けやすくなります。</p>
+      ${contact||hotline?`<ul>${contact}${hotline}</ul>`:""}
+    </div>`;
+  }
+  if(level==="mild"){
+    return `<div class="fb-rec rec-mild">
+      <h3>気になることがあればお話しください</h3>
+      <p>軽い負担のサインが見られました。気になることがあれば、外来で遠慮なくお話しください。</p>
+    </div>`;
+  }
+  return `<div class="fb-rec rec-none">
+      <h3>ご回答ありがとうございました</h3>
+      <p>気分・不安の面で、特に気になるサインは見られませんでした。今後も気になることがあれば、いつでも外来でご相談ください。</p>
+    </div>`;
+}
+
+function renderFeedback(d){
+  const wrap = document.getElementById("feedback");
+  let html = "";
+
+  // --- 受診・ご相談のおすすめ（PHQ-9 / GAD-7 に基づく。最上部に表示）---
+  html += buildRecommendation(d);
+
+  // --- グリット（1-5）逆転: 興味の一貫性 2,3,5,7,8,11 ---
+  if(num(d,"grit_1")!==null){
+    const rev=[2,3,5,7,8,11];
+    let total=0; for(let i=1;i<=12;i++){ let v=num(d,"grit_"+i); total += rev.includes(i)?(6-v):v; }
+    const overall=total/12;
+    let pers=0; [1,4,6,9,10,12].forEach(i=>pers+=num(d,"grit_"+i)); pers/=6;
+    let cons=0; [2,3,5,7,8,11].forEach(i=>cons+=(6-num(d,"grit_"+i))); cons/=6;
+    const rows = bar("全体（グリット）",overall,1,5,overall.toFixed(2)+" / 5")
+               + bar("努力の粘り強さ",pers,1,5,pers.toFixed(2)+" / 5")
+               + bar("興味の一貫性",cons,1,5,cons.toFixed(2)+" / 5");
+    html += card("グリット","物事を最後までやり抜く粘り強さと、興味を持続させる傾向の指標です。数値が高いほどその傾向が強いことを表します。",rows,"1〜5点（高いほど強い）");
+  }
+
+  // --- PGIS-II（1-6）逆転なし ---
+  if(num(d,"pgis_1")!==null){
+    let s=0; for(let i=1;i<=16;i++) s+=num(d,"pgis_"+i); const m=s/16;
+    html += card("自己成長主導性（PGIS-Ⅱ）","自分を成長・変化させようと能動的に取り組む傾向の指標です。",
+      bar("自己成長主導性",m,1,6,m.toFixed(2)+" / 6"),"1〜6点（高いほど主体的）");
+  }
+
+  // --- TIPI（1-7）ビッグファイブ ---
+  if(num(d,"tipi_1")!==null){
+    const rv=x=>8-x;
+    const ext=(num(d,"tipi_1")+rv(num(d,"tipi_6")))/2;
+    const agr=(rv(num(d,"tipi_2"))+num(d,"tipi_7"))/2;
+    const con=(num(d,"tipi_3")+rv(num(d,"tipi_8")))/2;
+    const sta=(rv(num(d,"tipi_4"))+num(d,"tipi_9"))/2;
+    const opn=(num(d,"tipi_5")+rv(num(d,"tipi_10")))/2;
+    const rows = bar("外向性",ext,1,7,ext.toFixed(1))
+               + bar("協調性",agr,1,7,agr.toFixed(1))
+               + bar("勤勉性",con,1,7,con.toFixed(1))
+               + bar("情緒安定性",sta,1,7,sta.toFixed(1))
+               + bar("開放性",opn,1,7,opn.toFixed(1));
+    html += card("性格プロフィール（ビッグファイブ／TIPI）","性格の5つの基本的な傾向です。良し悪しではなく、それぞれの強さの目安を示します。",rows,"各1〜7点");
+  }
+
+  // --- SWLS（合計5-35）---
+  if(num(d,"swls_1")!==null){
+    let s=0; for(let i=1;i<=5;i++) s+=num(d,"swls_"+i);
+    let band;
+    if(s>=31) band="非常に満足"; else if(s>=26) band="満足"; else if(s>=21) band="やや満足";
+    else if(s===20) band="どちらともいえない"; else if(s>=15) band="やや不満";
+    else if(s>=10) band="不満"; else band="非常に不満";
+    html += card("人生満足度（SWLS）","自分の人生全体に対する満足度です。",
+      bar("人生満足度",s,5,35,s+" / 35"),`目安: <span class="fb-band">${band}</span>　（5〜35点）`);
+  }
+
+  // --- BRS（1-5）逆転 2,4,6 ---
+  if(num(d,"brs_1")!==null){
+    let s=0; for(let i=1;i<=6;i++){ let v=num(d,"brs_"+i); s += [2,4,6].includes(i)?(6-v):v; }
+    const m=s/6;
+    let band; if(m>4.30) band="高い"; else if(m>=3.00) band="ふつう"; else band="低い";
+    html += card("レジリエンス（BRS）","ストレスや困難から立ち直る回復力の指標です。",
+      bar("レジリエンス",m,1,5,m.toFixed(2)+" / 5"),`目安: <span class="fb-band">${band}</span>　（1〜5点）`);
+  }
+
+  wrap.innerHTML = html;
+  // バーをアニメーションで伸ばす
+  requestAnimationFrame(()=>{
+    wrap.querySelectorAll(".fb-fill").forEach(f=>{ f.style.width = f.dataset.w + "%"; });
+  });
 }
 
 submitBtn.addEventListener("click", async ()=>{
@@ -734,26 +910,33 @@ submitBtn.addEventListener("click", async ()=>{
   submitMsg.className="ok";
   submitMsg.textContent="送信中…";
 
+  // GAS へ送信（mode:no-cors）。固まらないようタイムアウト付き。
+  let sent = false;
   if(GAS_ENDPOINT){
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 12000);
     try{
       await fetch(GAS_ENDPOINT, {
         method:"POST",
-        mode:"no-cors",              // GAS への送信はこれが必要（CORSエラー回避）
-        body: JSON.stringify(data)   // Content-Type は付けない（preflight回避）
+        mode:"no-cors",
+        body: JSON.stringify(data),
+        signal: ctrl.signal
       });
-      showDone();
-      return;
+      sent = true;
     }catch(err){
-      // ネットワーク障害時はバックアップとして CSV を保存
-      downloadCSV(data);
-      showDone();
-      return;
+      sent = false;   // 送信失敗（ネットワーク障害・タイムアウトなど）
+    }finally{
+      clearTimeout(timer);
     }
-  }else{
-    // 送信先未設定 → CSV ダウンロード
-    downloadCSV(data);
-    showDone();
   }
+
+  // 送信できなかった/未設定のときはバックアップCSVを保存（失敗しても無視）
+  if(!sent){
+    try{ downloadCSV(data); }catch(e){}
+  }
+
+  // 送信の成否にかかわらず、必ず完了画面とフィードバックを表示する
+  showDone(data);
 });
 </script>
 </body>
