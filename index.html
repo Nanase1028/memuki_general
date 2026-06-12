@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>前向き研究 アンケート 2026</title>
+<style>
+  :root{
+    --bg:#F4F6F8;
+    --card:#FFFFFF;
+    --ink:#1C2B33;
+    --ink-soft:#5A6B73;
+    --line:#E2E8EC;
+    --accent:#1F6F78;
+    --accent-soft:#E4F0F1;
+    --accent-ink:#12454A;
+    --warn:#C24A4A;
+    --warn-soft:#FBEAEA;
+    --radius:14px;
+    --shadow:0 1px 3px rgba(28,43,51,.06), 0 8px 24px rgba(28,43,51,.05);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","YuGothic","Noto Sans JP","Meiryo",system-ui,sans-serif;
+    font-size:16px;line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:120px;
+  }
+  /* progress bar */
+  #progress-wrap{
+    position:sticky;top:0;z-index:30;
+    background:rgba(244,246,248,.92);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:10px 16px 12px;
+  }
+  #progress-track{height:8px;border-radius:99px;background:var(--line);overflow:hidden;}
+  #progress-fill{height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width .35s ease;}
+  #progress-label{font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:flex;justify-content:space-between;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px;}
+  header.intro{padding:28px 0 8px;}
+  header.intro h1{font-size:22px;line-height:1.4;margin:0 0 10px;letter-spacing:.01em;}
+  header.intro p{font-size:14.5px;color:var(--ink-soft);margin:0 0 14px;}
+  .id-box{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;box-shadow:var(--shadow);margin:8px 0 4px;
+  }
+  .field{margin-bottom:18px;}
+  .field:last-child{margin-bottom:0;}
+  .id-box label{display:block;font-size:13.5px;font-weight:600;margin-bottom:8px;}
+  .req{display:inline-block;font-size:10.5px;color:#fff;background:var(--warn);border-radius:5px;padding:1px 7px;margin-left:6px;font-weight:700;vertical-align:middle;letter-spacing:.04em;}
+  .id-box input, .id-box select{
+    width:100%;padding:12px 14px;font-size:16px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  .id-box select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235A6B73' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+  .id-box input:focus, .id-box select:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+  .id-box .missing-field{border-color:var(--warn);background:var(--warn-soft);}
+  .age-row{display:flex;align-items:center;gap:10px;}
+  .age-row input{max-width:150px;}
+  .age-row .unit{font-size:14.5px;color:var(--ink-soft);}
+  .id-box .hint{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+
+  section.scale{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin:22px 0;overflow:hidden;
+  }
+  .scale-head{padding:20px 18px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff, #FAFCFC);}
+  .scale-no{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:99px;margin-bottom:8px;}
+  .scale-head h2{font-size:17.5px;margin:0 0 8px;line-height:1.45;}
+  .scale-head .instr{font-size:13.5px;color:var(--ink-soft);margin:0;}
+  .scale-head .lead{font-size:14.5px;font-weight:600;margin:12px 0 0;color:var(--ink);}
+
+  .item{padding:16px 18px;border-top:1px solid var(--line);}
+  .item:first-of-type{border-top:none;}
+  .item.attn .qtext::after{content:"";}
+  .qtext{font-size:15px;margin:0 0 12px;display:flex;gap:8px;}
+  .qnum{flex:0 0 auto;font-weight:700;color:var(--accent);min-width:1.6em;}
+  .item.missing .qtext{color:var(--ink-soft);}
+
+  .opts{display:grid;gap:6px;}
+  .opts.n4{grid-template-columns:repeat(4,1fr);}
+  .opts.n5{grid-template-columns:repeat(5,1fr);}
+  .opts.n6{grid-template-columns:repeat(6,1fr);}
+  .opts.n7{grid-template-columns:repeat(7,1fr);}
+  .opts.vert{grid-template-columns:1fr;gap:8px;}
+  .opts.vert .opt label{
+    flex-direction:row;align-items:center;justify-content:flex-start;
+    gap:12px;min-height:auto;padding:13px 16px;text-align:left;
+  }
+  .opts.vert .num{flex:0 0 auto;width:1.6em;text-align:center;}
+  .opts.vert .lab{font-size:14.5px;color:var(--ink);}
+  .opts.vert input:checked + label .lab{color:#fff;}
+  .opt{position:relative;}
+  .opt input{position:absolute;opacity:0;width:0;height:0;}
+  .opt label{
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    gap:3px;min-height:62px;padding:8px 3px 9px;cursor:pointer;
+    border:1.5px solid var(--line);border-radius:11px;background:#fff;
+    text-align:center;transition:all .12s ease;height:100%;
+  }
+  .opt .num{font-size:16px;font-weight:700;color:var(--ink);}
+  .opt .lab{font-size:10.5px;line-height:1.25;color:var(--ink-soft);word-break:break-word;}
+  .opt input:checked + label{
+    background:var(--accent);border-color:var(--accent);box-shadow:0 4px 12px rgba(31,111,120,.3);
+  }
+  .opt input:checked + label .num{color:#fff;}
+  .opt input:checked + label .lab{color:rgba(255,255,255,.9);}
+  .opt input:focus-visible + label{outline:2px solid var(--accent-ink);outline-offset:2px;}
+  .opt label:active{transform:scale(.97);}
+
+  .item.unanswered{background:var(--warn-soft);}
+  .item.unanswered .opts{outline:2px solid var(--warn);outline-offset:6px;border-radius:8px;}
+
+  .note{font-size:12.5px;color:var(--ink-soft);padding:0 18px 18px;margin:0;}
+
+  .missing-block{padding:18px;color:var(--ink-soft);font-size:13.5px;background:repeating-linear-gradient(45deg,#fff,#fff 10px,#FAFBFB 10px,#FAFBFB 20px);}
+
+  /* footer submit */
+  #footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:rgba(255,255,255,.96);backdrop-filter:blur(8px);
+    border-top:1px solid var(--line);padding:14px 16px;
+    box-shadow:0 -4px 16px rgba(28,43,51,.06);
+  }
+  #footer .wrap{display:flex;align-items:center;gap:12px;}
+  #submit-msg{font-size:13px;color:var(--warn);flex:1;}
+  #submit-msg.ok{color:var(--accent-ink);}
+  button#submit{
+    appearance:none;border:none;background:var(--accent);color:#fff;
+    font-size:16px;font-weight:700;font-family:inherit;
+    padding:14px 26px;border-radius:12px;cursor:pointer;white-space:nowrap;
+    transition:opacity .15s, transform .1s;
+  }
+  button#submit:disabled{opacity:.5;cursor:default;}
+  button#submit:active{transform:scale(.98);}
+
+  /* done screen */
+  #done{display:none;text-align:center;padding:80px 24px;}
+  #done .check{font-size:48px;}
+  #done h2{font-size:22px;margin:14px 0 8px;}
+  #done p{color:var(--ink-soft);font-size:14.5px;}
+  #done button{margin-top:20px;background:#fff;border:1px solid var(--line);color:var(--accent-ink);font-family:inherit;font-size:14px;padding:11px 20px;border-radius:10px;cursor:pointer;}
+
+  @media (max-width:430px){
+    .opt .lab{font-size:9.5px;}
+    .opts.n7,.opts.n6{gap:4px;}
+    .opt label{min-height:58px;padding:7px 2px;}
+    .scale-head h2{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-wrap">
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="progress-label"><span id="prog-text">0 / 0 問</span><span id="prog-pct">0%</span></div>
+</div>
+
+<main class="wrap" id="form-root"></main>
+
+<div id="done">
+  <div class="check">✓</div>
+  <h2>ご回答ありがとうございました</h2>
+  <p>回答が記録されました。このページは閉じていただいて構いません。</p>
+  <button onclick="location.reload()">最初に戻る</button>
+</div>
+
+<div id="footer">
+  <div class="wrap">
+    <span id="submit-msg"></span>
+    <button id="submit" disabled>回答を送信する</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   設定（researcher）: データ送信先
+   ------------------------------------------------------------
+   Google Apps Script の Web App URL をここに貼ると、
+   送信時にその URL へ JSON が POST されます。
+   空のままにすると、送信時に回答を CSV ファイルとして
+   ダウンロードします（バックアップ用）。
+   ============================================================ */
+const GAS_ENDPOINT = "";   // 例: "https://script.google.com/macros/s/XXXX/exec"
+
+/* ---- 尺度データ（本文に項目があったものを収録）---- */
+const SCALES = [
+  {
+    id:"euda", no:"尺度 ①",
+    title:"ユウダイモニック・ウェルビーイング尺度",
+    instr:"以下の質問紙には、あなたの人生において、物事がどのように進んできたと感じられるかについての文章が含まれています。それぞれの文を読んで、自分に当てはまる程度を考え、最もよくあてはまるものを1つ選んでください。こうあってほしいと思うよりも、実際に物事がどのように進んでいるか、あなた自身の気持ちに従って答えてください。",
+    options:["全くそう思わない","あまりそう思わない","どちらともいえない","ややそう思う","非常にそう思う"],
+    values:[0,1,2,3,4],
+    items:[
+      "私は、毎日行っている活動の多くに没頭していると思う",
+      "私は、本当の自分を見つけられたと思う",
+      "もし自分の人生においていろいろなことが楽に済めば、それは理想的なことだと思う",
+      "私の人生は、人生に意味をもたらすしっかりとした信念を軸に、展開している",
+      "他の人が感心するかどうかよりも、自分のしていることを本当に楽しむことの方が大切である",
+      "私は、自分の一番の強みは何であるかを知っているし、可能な限りそれを伸ばそうと努力していると思う",
+      "私にとって何が良いのかについて、私自身よりも他の人がよく知っていることが多い",
+      "私は、多大な努力を投資する価値のあることをしているとき、最高の気分になる",
+      "私は、人生の目標を見つけたと言うことができる",
+      "もし自分が取り組んでいることにやりがいを見出せなかったら、それを続けられないと思う",
+      "いまだに私は人生で何をすべきか見つけ出せていない",
+      "なぜ自身の活動を頑張りたいと思う人がいるのか、理解できない",
+      "自分のしていることが、追求する価値のある目的に沿っているものであるのか、それを知ることが重要だと思う",
+      "いくつかの行動は自分にとってしっくりくるため、たいてい自分が何をすべきかわかっている",
+      "この箇所では3と答えてください",
+      "自分の一番の強みを活かせる活動に取り組んでいるとき、自分が確かに生きているという気持ちになる",
+      "何が自分の本当の才能であるのかわからず、困惑している",
+      "私が取り組んでいるたくさんのことは、私自身を表現するものだと思う",
+      "私にとって、自身が取り組んでいる活動によって充実感を得ることは、大切なことである",
+      "もし何かがとても困難なものであるとき、それはおそらく取り組む価値がないものである",
+      "私は、自分が行っていることに全力で取り組むことができない",
+      "私は、人生の中で何をすべきなのか、わかっていると思う"
+    ]
+  },
+  {
+    id:"negcap", no:"尺度 ②",
+    title:"ネガティブ・ケイパビリティ尺度",
+    instr:"次の文章について、あなた自身にどの程度あてはまるかをお尋ねします。もっとも適切だと思うものを選んでください。",
+    options:["全く当てはまらない","当てはまらない","あまり当てはまらない","やや当てはまる","当てはまる","非常に当てはまる"],
+    values:[1,2,3,4,5,6],
+    items:[
+      "悪いことが起こったら原因をはっきりさせたい",
+      "不確かなことはできるだけ明確にしなければ気が済まない",
+      "他人の失敗の原因がどこにあるのかはっきりさせたい",
+      "思わしくないことが起きたとき、原因が分からないことは耐え難い",
+      "問題が起こったら誰に責任があるのかはっきりさせたい",
+      "中途半端な状態には耐えられない",
+      "自分の考えと違う意見が出たらどちらがよいかはっきりさせたい",
+      "不確かな状況ではどう対処すればいいか迷ってしまう",
+      "理解の難しい複雑な状況に身を置きたくない",
+      "何か問題があると頭から離れなくなる",
+      "先の見通しが立たないと不安を感じる",
+      "目に見える結果が出ないと不安だ",
+      "人が話しているところについ口を出してしまう",
+      "やりたいことを衝動的にやってしまうことが多い",
+      "思いついたことはすぐに言いたい",
+      "人の話を聞くときにはまずは最後まで聞くようにしている",
+      "他人の態度から何を考えているかわかる",
+      "他人の外見から性格の予想がつく",
+      "うまく付き合える人とそうでない人の予想がつく",
+      "不完全なところもある程度受け入れることができる",
+      "矛盾していることでも受け入れる方だと思う",
+      "一つの事柄に対してさまざまな見方ができる",
+      "どんなことでも複数の選択肢を考慮する方だ",
+      "新しい人と出会うのが好きだ"
+    ]
+  },
+  {
+    id:"grit", no:"尺度 ③",
+    title:"日本語版グリット尺度",
+    instr:"以下にいくつかの文章が並んでいます。文章はあなたに当てはまるものかもしれませんし、当てはまらないものかもしれません。正確な得点のために、回答する時にはあなたが多数と比べてどのようであるかについて考えてください。比較する対象は、あなたのよく知っている人達ではなく、世の中の多数の人々です。回答に正解や間違いはありませんので、思った通り正直に回答してください。",
+    options:["全く当てはまらない","あまり当てはまらない","少し当てはまる","かなり当てはまる","非常に当てはまる"],
+    values:[1,2,3,4,5],
+    items:[
+      "重要な試練に打ち勝つため、困難を乗り越えてきた。",
+      "新しいアイディアや計画によって、それまで取り組んでいたことから注意がそれることがある。",
+      "私の興味は年々変わる。",
+      "困難があっても、私はやる気を失わない。",
+      "あるアイディアや計画に一時的に夢中になっても、あとで興味を失うことがある。",
+      "私は頑張り屋だ。",
+      "目標を決めても、後から変えてしまうことがよくある。",
+      "数ヶ月以上かかるような計画に集中して取り組み続けることは難しい。",
+      "始めたことは、どんなことでも最後までやりとげる。",
+      "数年にわたる努力を要する目標を達成したことがある。",
+      "数か月ごとに新しい活動への興味がわいてくる。",
+      "私は精魂傾けてものごとに取り組む。"
+    ],
+    note:"※採点メモ：「興味の一貫性」項目（No.2・3・5・7・8・11）は逆転項目（得点が高いほどグリットが低い）。「努力の粘り強さ」項目（No.1・4・6・9・10・12）は得点が高いほどグリットが高い。グリット得点算出時は前者を逆転（例：1点→5点）したうえで全項目を合算する。"
+  },
+  {
+    id:"ambig", no:"尺度 ⑤",
+    title:"曖昧さへの態度尺度",
+    instr:"あなたが普段ものごとをどのように考えたり感じたりしやすいかについてたずねます。自分の考え方や感じ方にどの程度あてはまるかを、あまり考え込まずに1つ選んでください。",
+    options:["全く当てはまらない","ほぼ当てはまらない","やや当てはまらない","やや当てはまる","ほぼ当てはまる","非常に当てはまる"],
+    values:[1,2,3,4,5,6],
+    items:[
+      "いろんな可能性があると、すべてを試してみたくなる",
+      "いくつかの解釈ができると、いろんな角度からものごとを見れる点では自由な感じがする",
+      "見たことがないものには想像力をかきたてられる",
+      "いろんな可能性があると選べるのでうれしい",
+      "見たことがないものは見ておくにこしたことはないので、ぜひ見てみたい",
+      "ここでは一番右の選択肢を選んでください",
+      "不完全なことは完全にしていくプロセスがあっておもしろい",
+      "いくつかの解釈ができると、視野や可能性が広がっていくのでおもしろい",
+      "はっきりしない状況ではどうしたらいいかわからなくなる",
+      "見たことがないものに出会うと怖くなる",
+      "見たことがないものにすぐに近寄るのは抵抗がある",
+      "はっきりしない状況におかれると不安になる",
+      "いろんな可能性があると、選ぶのに時間がかかって迷う",
+      "情報が多すぎると、かえって頭が混乱してしまう",
+      "はっきり決めないままにしておいた方が気が楽なこともある",
+      "不完全なままにしておいた方がよい時もある",
+      "不完全なことがあるからおもしろい",
+      "不完全なところも、ある程度受け入れられる",
+      "はっきりしていないことがあっても、そのままにしておくのがいい",
+      "情報がたりないと動きづらいので、できるだけ情報を集めたい",
+      "情報がたりないと正確な判断はできない",
+      "確実でないところは確認して明らかにしたい",
+      "いろんな可能性がある時には、さまざまなことを考慮して対処法を考えておきたい",
+      "一貫していないことには信頼がおけない",
+      "どっちつかずな立場はどちらか一方にはっきりさせるべきだ",
+      "どっちつかずであることはよくないと思う",
+      "はっきりしないことはできるだけ白黒つけたい"
+    ]
+  },
+  {
+    id:"pgis", no:"尺度 ⑥",
+    title:"自己成長主導尺度Ⅱ 日本語版（PGIS-Ⅱ）",
+    instr:"それぞれの示された質問文に対して、あてはまる数字を選択してください。（6段階）",
+    options:["全く当てはまらない","やや当てはまらない","少し当てはまらない","少し当てはまる","やや当てはまる","かなり当てはまる"],
+    values:[1,2,3,4,5,6],
+    items:[
+      "自分自身について変えたいと思う実現可能な目標を設定している。",
+      "私は今、自分自身が何らかの変化をする態勢が整っていると言うことができる。",
+      "自分自身を変えるために実現可能な計画をどのように立てるかを知っている。",
+      "私は自分が成長するための機会を決して逃さない。",
+      "自分自身を変えようとしているとき、自分の成長にあった実現可能な計画を立てる。",
+      "自分自身を変えようとするとき、私は助けを求める。",
+      "私は自分を向上させようと積極的に取り組む。",
+      "自分自身が変わるために何が必要かを理解している。",
+      "私は、絶えず人として成長しようとしている。",
+      "自分自身を変えるために実現可能な目標をどのように設定するかを知っている。",
+      "私はいつ明確な変化をしなくてはならないかを知っている。",
+      "成長しようと思うとき、資源を活用する。",
+      "どのような段階を踏めば自分自身が求める変化を遂げられるかを知っている。",
+      "自分自身を変えようとするとき、積極的に支援を探し求める。",
+      "私は、人として成長する機会を探す。",
+      "私は自分自身における特定の事について、変える時がいつかを知っている。"
+    ]
+  },
+  {
+    id:"flow", no:"尺度 ⑦",
+    title:"全体的フロー傾向尺度",
+    instr:"以下の文を読んで、あなたに最もよく当てはまるものを、1（まったく同意しない）から5（とても同意する）の中から選んでください。（仕事をされていない方は、学校生活や家事などに置き換えて回答してください）",
+    options:["まったく同意しない","","","","とても同意する"],
+    values:[1,2,3,4,5],
+    items:[
+      "私は、集中力を必要とする困難な仕事や活動を楽しむ",
+      "課題や活動に集中していると、すぐに周囲の環境（他の人、時間、場所）を忘れてしまう傾向がある",
+      "簡単すぎず、難しすぎもしない物事を行う時、たいてい良いフロー（※）を経験する",
+      "興味のある分野がいくつかある",
+      "現在取り組んでいるプロジェクトから離れたり、やめたりするのは難しい",
+      "困難な／挑戦的な課題に直面するとストレスを感じる",
+      "時間をかけて集中力を維持するのが難しい",
+      "やることにすぐに飽きてしまう",
+      "さまざまな仕事をこなした結果には、たいてい満足している（達成感がある）",
+      "何かに集中すると、休憩するのを忘れることが多い",
+      "すぐに飽きてしまう",
+      "毎日の仕事は、刺激的というよりむしろ疲れる",
+      "人生ですることのほとんどに興味を持つ"
+    ],
+    note:"※フローとは何かにとても集中している状態のことです。この状態になると、時間があっという間に過ぎたり、自分がやっていることに完全に没頭していて、他のことを考えなくなったりします。"
+  },
+  {
+    id:"tipi", no:"尺度 ⑧",
+    title:"Ten Item Personality Inventory（TIPI）",
+    instr:"次のことばがあなた自身にどのくらい当てはまるかについて、1から7のうちもっとも適切なものを選んでください。文章全体を総合的に見て、自分にどれだけ当てはまるかを評価してください。",
+    lead:"私は自分のことを……",
+    options:["全く違うと思う","おおよそ違うと思う","少し違うと思う","どちらでもない","少しそう思う","まあまあそう思う","強くそう思う"],
+    values:[1,2,3,4,5,6,7],
+    items:[
+      "活発で、外向的だと思う",
+      "他人に不満を持ち、もめごとを起こしやすいと思う",
+      "しっかりしていて、自分に厳しいと思う",
+      "心配性で、うろたえやすいと思う",
+      "新しいことが好きで、変わった考えをもつと思う",
+      "控えめで、おとなしい人間だと思う",
+      "人に気をつかう、やさしい人間だと思う",
+      "だらしなく、うっかりしていると思う",
+      "冷静で、気分が安定していると思う",
+      "発想力に欠けた、平凡な人間だと思う"
+    ]
+  },
+  {
+    id:"phq", no:"尺度 ⑨",
+    title:"PHQ-9",
+    instr:"この2週間、次のような問題にどのくらい頻繁（ひんぱん）に悩まされていますか。最もよくあてはまるものを一つ選んでください。",
+    options:["全くない","数日","半分以上","ほとんど毎日"],
+    values:[0,1,2,3],
+    items:[
+      "物事に対してほとんど興味がない、または楽しめない",
+      "気分が落ち込む、憂うつになる、または絶望的な気持ちになる",
+      "寝付きが悪い、途中で目がさめる、または逆に眠りすぎる",
+      "疲れた感じがする、または気力がない",
+      "あまり食欲がない、または食べ過ぎる",
+      "自分はダメな人間だ、人生の敗北者だと気に病む、または自分自身あるいは家族に申し訳がないと感じる",
+      "新聞を読む、またはテレビを見ることなどに集中することが難しい",
+      "他人が気づくぐらいに動きや話し方が遅くなる、あるいはこれと反対に、そわそわしたり、落ちつかず、普段よりも動き回ることがある",
+      "死んだほうがましだ、あるいは自分を何らかの方法で傷つけようと思ったことがある"
+    ],
+    extra:{
+      id:"phq_diff",
+      text:"いずれかの問題に1つでもチェックしているなら、それらの問題によって仕事をしたり、家事をしたり、他の人と仲良くやっていくことがどのくらい困難になっていますか",
+      options:["全く困難でない","やや困難","困難","極端に困難"],
+      values:[0,1,2,3]
+    }
+  },
+  {
+    id:"gad", no:"尺度 ⑩",
+    title:"GAD-7",
+    instr:"この2週間、次のような問題にどのくらい頻繁（ひんぱん）に悩まされていますか。最もよくあてはまるものを一つ選んでください。",
+    options:["全くない","数日","半分以上","ほとんど毎日"],
+    values:[0,1,2,3],
+    items:[
+      "緊張感、不安感または神経過敏を感じる",
+      "心配することを止められない、または心配をコントロールできない",
+      "いろいろなことを心配しすぎる",
+      "くつろぐことが難しい",
+      "じっとしていることができないほど落ち着かない",
+      "いらいらしがちであり、怒りっぽい",
+      "何か恐ろしいことがおこるのではないかと恐れを感じる"
+    ],
+    extra:{
+      id:"gad_diff",
+      text:"いずれかの問題に1つでもチェックしているなら、それらの問題によって仕事をしたり、家事をしたり、他の人と仲良くやっていくことがどのくらい困難になっていますか",
+      options:["全く困難でない","やや困難","困難","極端に困難"],
+      values:[0,1,2,3]
+    }
+  },
+  {
+    id:"swls", no:"尺度 ⑪",
+    title:"SWLS（人生満足度尺度）",
+    instr:"下記の文章を読み、どのくらい同意するかを、1〜7の尺度を使って示してください。",
+    options:["まったく当てはまらない","ほとんど当てはまらない","あまり当てはまらない","どちらとも言えない","少し当てはまる","だいたい当てはまる","非常によく当てはまる"],
+    values:[1,2,3,4,5,6,7],
+    items:[
+      "ほとんどの面で、私の人生は私の理想に近い",
+      "私の人生は、とてもすばらしい状態だ",
+      "私は自分の人生に満足している",
+      "私はこれまで、自分の人生に求める大切なものを得てきた",
+      "人生をもう1度やり直せるとしても、ほとんど何も変えないだろう"
+    ]
+  },
+  {
+    id:"brs", no:"尺度 ⑫",
+    title:"BRS（ブリーフ・レジリエンス尺度 日本語版）",
+    instr:"それぞれの示された質問文に対して、どのくらい当てはまるか、最もよくあてはまるものを1つ選んでください。",
+    options:["まったくあてはまらない","ややあてはまらない","どちらともいえない","ややあてはまる","かなりあてはまる"],
+    values:[1,2,3,4,5],
+    items:[
+      "私はつらい時があった後でも、素早く立ち直れる。",
+      "私はストレスの多い出来事を乗り越えるのに苦労する。",
+      "ストレスが多い出来事から立ち直るのに長くはかからない。",
+      "なにかしら不遇な出来事が起きた時に立ち直るのは難しい。",
+      "ささいな問題があっても、たいていやり過ごせる。",
+      "人生における遅れを取り戻すのに時間がかかる。"
+    ],
+    note:"※採点時、Q2・Q4・Q6は逆転項目です（6−得点で計算）。"
+  },
+  {
+    id:"gait", no:"参考資料1",
+    title:"歩様（歩き方）尺度",
+    instr:"普段のあなたの歩き方についてお尋ねします。自分を客観的に眺めているイメージをしながらお答えください。最近のご様子が普段と違ったら、普段のことについてお答えください。以下について、あなたに最もよく当てはまるものを1つ選んでください。",
+    options:["あてはまらない","ややあてはまらない","ややあてはまる","あてはまる"],
+    values:[1,2,3,4],
+    items:[
+      "全体的に姿勢が悪い",
+      "腕を大きく振る",
+      "腕はほとんど振らない",
+      "全体的に姿勢が良い",
+      "左右に横揺れする",
+      "歩幅は広めである",
+      "あごを引いている",
+      "歩くのが速い",
+      "うなだれている",
+      "背筋が伸びている",
+      "歩幅は狭めである",
+      "姿勢が左右にブレない",
+      "歩くのが遅い",
+      "前屈みになっている"
+    ],
+    extra:{
+      id:"gait_time",
+      text:"普段の平均的な歩行時間は何分間程度ですか？",
+      vertical:true,
+      options:[
+        "ほとんど歩かない",
+        "5分から15分程度",
+        "15分から30分程度",
+        "30分から1時間程度",
+        "1時間から1時間半程度",
+        "1時間半から2時間程度",
+        "2時間以上"
+      ],
+      values:[1,2,3,4,5,6,7]
+    }
+  }
+];
+
+/* ---- 描画 ---- */
+const root = document.getElementById("form-root");
+let totalItems = 0;
+const itemKeys = [];
+
+const intro = document.createElement("header");
+intro.className = "intro";
+intro.innerHTML = `
+  <h1>前向き研究 アンケート（2026）</h1>
+  <p>各設問について、最もよくあてはまる選択肢を1つタップしてください。所要時間の目安は10〜15分です。</p>
+  <div class="id-box">
+    <div class="field">
+      <label for="pid">参加者ID <span class="req">必須</span></label>
+      <input id="pid" type="text" inputmode="text" autocomplete="off" placeholder="例: P001（調査担当者から指定された番号）">
+      <div class="hint">IDを間違えると謝金をお支払いできないことがありますので、不明な場合は研究者にご確認ください。</div>
+    </div>
+    <div class="field">
+      <label for="gender">性別 <span class="req">必須</span></label>
+      <select id="gender">
+        <option value="">選択してください</option>
+        <option value="男性">男性</option>
+        <option value="女性">女性</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="age">年齢 <span class="req">必須</span></label>
+      <div class="age-row">
+        <input id="age" type="number" inputmode="numeric" autocomplete="off" min="0" max="120" placeholder="例: 25">
+        <span class="unit">歳</span>
+      </div>
+    </div>
+  </div>`;
+root.appendChild(intro);
+
+SCALES.forEach(scale=>{
+  const sec = document.createElement("section");
+  sec.className = "scale";
+  const n = scale.options.length;
+
+  let head = `<div class="scale-head">
+      <span class="scale-no">${scale.no}</span>
+      <h2>${scale.title}</h2>
+      <p class="instr">${scale.instr}</p>
+      ${scale.lead ? `<p class="lead">${scale.lead}</p>` : ""}
+    </div>`;
+  sec.innerHTML = head;
+
+  scale.items.forEach((text, i)=>{
+    const key = `${scale.id}_${i+1}`;
+    itemKeys.push(key);
+    totalItems++;
+    const item = document.createElement("div");
+    item.className = "item";
+    item.dataset.key = key;
+    let opts = `<div class="opts n${n}" role="radiogroup" aria-label="${scale.title} 設問${i+1}">`;
+    scale.options.forEach((label, j)=>{
+      const val = scale.values[j];
+      const id = `${key}_${j}`;
+      opts += `<div class="opt">
+        <input type="radio" id="${id}" name="${key}" value="${val}">
+        <label for="${id}"><span class="num">${val}</span>${label?`<span class="lab">${label}</span>`:""}</label>
+      </div>`;
+    });
+    opts += `</div>`;
+    item.innerHTML = `<p class="qtext"><span class="qnum">${i+1}.</span><span>${text}</span></p>${opts}`;
+    sec.appendChild(item);
+  });
+
+  if(scale.note){
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = scale.note;
+    sec.appendChild(note);
+  }
+
+  // 追加質問（PHQ/GAD の機能障害、歩様の歩行時間など）
+  if(scale.extra){
+    const ex = scale.extra;
+    itemKeys.push(ex.id);
+    totalItems++;
+    const item = document.createElement("div");
+    item.className = "item";
+    item.dataset.key = ex.id;
+    const m = ex.options.length;
+    const vert = !!ex.vertical;
+    let opts = `<div class="opts ${vert?'vert':'n'+m}" role="radiogroup" aria-label="${ex.id}">`;
+    ex.options.forEach((label,j)=>{
+      const id = `${ex.id}_${j}`;
+      const val = (ex.values && ex.values[j]!==undefined) ? ex.values[j] : j+1;
+      if(vert){
+        opts += `<div class="opt">
+          <input type="radio" id="${id}" name="${ex.id}" value="${val}">
+          <label for="${id}"><span class="num">${val}</span><span class="lab">${label}</span></label>
+        </div>`;
+      } else {
+        opts += `<div class="opt">
+          <input type="radio" id="${id}" name="${ex.id}" value="${val}">
+          <label for="${id}"><span class="lab" style="font-size:11.5px">${label}</span></label>
+        </div>`;
+      }
+    });
+    opts += `</div>`;
+    item.innerHTML = `<p class="qtext"><span>${ex.text}</span></p>${opts}`;
+    sec.appendChild(item);
+  }
+
+  root.appendChild(sec);
+});
+
+/* ---- 進捗・検証 ---- */
+const fill = document.getElementById("progress-fill");
+const progText = document.getElementById("prog-text");
+const progPct = document.getElementById("prog-pct");
+const submitBtn = document.getElementById("submit");
+const submitMsg = document.getElementById("submit-msg");
+
+function answeredCount(){
+  let c=0;
+  itemKeys.forEach(k=>{ if(document.querySelector(`input[name="${k}"]:checked`)) c++; });
+  return c;
+}
+function getDemo(){
+  return {
+    pid:(document.getElementById("pid").value||"").trim(),
+    gender:document.getElementById("gender").value,
+    age:(document.getElementById("age").value||"").trim()
+  };
+}
+function demographicsFilled(){
+  const d = getDemo();
+  return d.pid!=="" && d.gender!=="" && d.age!=="";
+}
+function updateProgress(){
+  const c = answeredCount();
+  const pct = totalItems? Math.round(c/totalItems*100):0;
+  fill.style.width = pct+"%";
+  progText.textContent = `${c} / ${totalItems} 問`;
+  progPct.textContent = pct+"%";
+  const demoOK = demographicsFilled();
+  submitBtn.disabled = !(c === totalItems && demoOK);
+  if(c===totalItems && !demoOK){
+    submitMsg.className=""; submitMsg.textContent="ID・性別・年齢を入力してください。";
+  } else if(c===totalItems){
+    submitMsg.textContent=""; submitMsg.className="";
+  }
+}
+root.addEventListener("change", e=>{
+  if(e.target.matches('input[type="radio"]')){
+    const item = e.target.closest(".item");
+    if(item) item.classList.remove("unanswered");
+    updateProgress();
+  }
+});
+["pid","age"].forEach(id=>document.getElementById(id).addEventListener("input",()=>{
+  document.getElementById(id).classList.remove("missing-field"); updateProgress();
+}));
+document.getElementById("gender").addEventListener("change",()=>{
+  document.getElementById("gender").classList.remove("missing-field"); updateProgress();
+});
+updateProgress();
+
+/* ---- 送信 ---- */
+function collect(){
+  const d = getDemo();
+  const data = {
+    timestamp: new Date().toISOString(),
+    participant_id: d.pid,
+    gender: d.gender,
+    age: d.age
+  };
+  itemKeys.forEach(k=>{
+    const el = document.querySelector(`input[name="${k}"]:checked`);
+    data[k] = el? Number(el.value) : "";
+  });
+  return data;
+}
+function toCSV(data){
+  const keys = Object.keys(data);
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  return keys.map(esc).join(",") + "\n" + keys.map(k=>esc(data[k])).join(",");
+}
+function downloadCSV(data){
+  const blob = new Blob(["\uFEFF"+toCSV(data)], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `survey_${data.participant_id||"response"}_${Date.now()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function showDone(){
+  document.querySelector(".wrap#form-root, main.wrap").style.display="none";
+  document.getElementById("progress-wrap").style.display="none";
+  document.getElementById("footer").style.display="none";
+  document.getElementById("done").style.display="block";
+  window.scrollTo(0,0);
+}
+
+submitBtn.addEventListener("click", async ()=>{
+  // ID・性別・年齢の未入力チェック
+  const demoFields = ["pid","gender","age"];
+  let firstEmptyDemo = null;
+  demoFields.forEach(id=>{
+    const el = document.getElementById(id);
+    if((el.value||"").trim()===""){
+      el.classList.add("missing-field");
+      if(!firstEmptyDemo) firstEmptyDemo = el;
+    } else {
+      el.classList.remove("missing-field");
+    }
+  });
+  if(firstEmptyDemo){
+    submitMsg.className="";
+    submitMsg.textContent="ID・性別・年齢を入力してください。";
+    firstEmptyDemo.scrollIntoView({behavior:"smooth", block:"center"});
+    firstEmptyDemo.focus();
+    return;
+  }
+
+  // 未回答チェック
+  let firstMissing = null;
+  itemKeys.forEach(k=>{
+    const item = document.querySelector(`.item[data-key="${k}"]`);
+    if(!document.querySelector(`input[name="${k}"]:checked`)){
+      item.classList.add("unanswered");
+      if(!firstMissing) firstMissing = item;
+    }
+  });
+  if(firstMissing){
+    submitMsg.className="";
+    submitMsg.textContent="未回答の設問があります。";
+    firstMissing.scrollIntoView({behavior:"smooth", block:"center"});
+    return;
+  }
+
+  const data = collect();
+  submitBtn.disabled = true;
+  submitMsg.className="ok";
+  submitMsg.textContent="送信中…";
+
+  if(GAS_ENDPOINT){
+    try{
+      await fetch(GAS_ENDPOINT, {
+        method:"POST",
+        mode:"no-cors",              // GAS への送信はこれが必要（CORSエラー回避）
+        body: JSON.stringify(data)   // Content-Type は付けない（preflight回避）
+      });
+      showDone();
+      return;
+    }catch(err){
+      // ネットワーク障害時はバックアップとして CSV を保存
+      downloadCSV(data);
+      showDone();
+      return;
+    }
+  }else{
+    // 送信先未設定 → CSV ダウンロード
+    downloadCSV(data);
+    showDone();
+  }
+});
+</script>
+</body>
+</html>
