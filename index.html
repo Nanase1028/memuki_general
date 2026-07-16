@@ -132,8 +132,9 @@
     box-shadow:0 -4px 16px rgba(28,43,51,.06);
   }
   #footer .wrap{display:flex;align-items:center;gap:12px;}
-  #submit-msg{font-size:13px;color:var(--warn);flex:1;}
+  #submit-msg{font-size:13px;color:var(--ink-soft);flex:1;}
   #submit-msg.ok{color:var(--accent-ink);}
+  #submit-msg.warn{color:var(--warn);font-weight:700;cursor:pointer;text-decoration:underline;}
   button#submit{
     appearance:none;border:none;background:var(--accent);color:#fff;
     font-size:16px;font-weight:700;font-family:inherit;
@@ -205,7 +206,7 @@
 <div id="footer">
   <div class="wrap">
     <span id="submit-msg"></span>
-    <button id="submit" disabled>回答を送信する</button>
+    <button id="submit">回答を送信する</button>
   </div>
 </div>
 
@@ -680,14 +681,54 @@ function updateProgress(){
   fill.style.width = pct+"%";
   progText.textContent = `${c} / ${totalItems} 問`;
   progPct.textContent = pct+"%";
-  const demoOK = demographicsFilled();
-  submitBtn.disabled = !(c === totalItems && demoOK);
-  if(c===totalItems && !demoOK){
-    submitMsg.className=""; submitMsg.textContent="ID・性別・年齢を入力してください。";
-  } else if(c===totalItems){
-    submitMsg.textContent=""; submitMsg.className="";
+  // 送信ボタンは常に押せる（押すと未回答チェックが走る）
+  // 未回答の警告を表示中なら、件数をライブ更新
+  if(submitMsg.classList.contains("warn")){
+    const t = computeMissing();
+    if(t.length===0){ submitMsg.textContent=""; submitMsg.classList.remove("warn"); }
+    else submitMsg.textContent = `未回答が ${t.length}か所 あります（タップで移動）`;
   }
 }
+
+// 未回答・未入力の対象を、画面の並び順（ID/性別/年齢 → 各設問）で集める
+function computeMissing(){
+  const targets = [];
+  ["pid","gender","age"].forEach(id=>{
+    const el = document.getElementById(id);
+    if((el.value||"").trim()==="") targets.push(el);
+  });
+  itemKeys.forEach(k=>{
+    if(!document.querySelector(`input[name="${k}"]:checked`)){
+      targets.push(document.querySelector(`.item[data-key="${k}"]`));
+    }
+  });
+  return targets;
+}
+// 未回答をすべて赤くする
+function markMissing(targets){
+  document.querySelectorAll(".item.unanswered").forEach(el=>el.classList.remove("unanswered"));
+  ["pid","gender","age"].forEach(id=>document.getElementById(id).classList.remove("missing-field"));
+  targets.forEach(el=>{
+    if(el.classList.contains("item")) el.classList.add("unanswered");
+    else el.classList.add("missing-field");
+  });
+}
+function jumpTo(el){
+  el.scrollIntoView({behavior:"smooth", block:"center"});
+  if(el.tagName==="INPUT" || el.tagName==="SELECT"){ try{ el.focus({preventScroll:true}); }catch(e){ el.focus(); } }
+}
+let jumpIdx = 0;
+// 赤字警告をタップ → 次の未回答へ移動（順に巡回）
+submitMsg.addEventListener("click", ()=>{
+  if(!submitMsg.classList.contains("warn")) return;
+  const t = computeMissing();
+  if(t.length===0){ submitMsg.textContent=""; submitMsg.classList.remove("warn"); return; }
+  markMissing(t);
+  jumpIdx = jumpIdx % t.length;
+  jumpTo(t[jumpIdx]);
+  jumpIdx++;
+  submitMsg.textContent = `未回答が ${t.length}か所 あります（タップで移動）`;
+});
 root.addEventListener("change", e=>{
   if(e.target.matches('input[type="radio"]')){
     const item = e.target.closest(".item");
@@ -880,41 +921,18 @@ function renderFeedback(d){
 }
 
 submitBtn.addEventListener("click", async ()=>{
-  // ID・性別・年齢の未入力チェック
-  const demoFields = ["pid","gender","age"];
-  let firstEmptyDemo = null;
-  demoFields.forEach(id=>{
-    const el = document.getElementById(id);
-    if((el.value||"").trim()===""){
-      el.classList.add("missing-field");
-      if(!firstEmptyDemo) firstEmptyDemo = el;
-    } else {
-      el.classList.remove("missing-field");
-    }
-  });
-  if(firstEmptyDemo){
-    submitMsg.className="";
-    submitMsg.textContent="ID・性別・年齢を入力してください。";
-    firstEmptyDemo.scrollIntoView({behavior:"smooth", block:"center"});
-    firstEmptyDemo.focus();
+  // ID・性別・年齢・全設問の未回答をまとめてチェック
+  const targets = computeMissing();
+  if(targets.length > 0){
+    markMissing(targets);
+    submitMsg.classList.remove("ok");
+    submitMsg.classList.add("warn");
+    submitMsg.textContent = `未回答が ${targets.length}か所 あります（タップで移動）`;
+    jumpTo(targets[0]);        // 最初の未回答へ移動
+    jumpIdx = 1 % targets.length;
     return;
   }
-
-  // 未回答チェック
-  let firstMissing = null;
-  itemKeys.forEach(k=>{
-    const item = document.querySelector(`.item[data-key="${k}"]`);
-    if(!document.querySelector(`input[name="${k}"]:checked`)){
-      item.classList.add("unanswered");
-      if(!firstMissing) firstMissing = item;
-    }
-  });
-  if(firstMissing){
-    submitMsg.className="";
-    submitMsg.textContent="未回答の設問があります。";
-    firstMissing.scrollIntoView({behavior:"smooth", block:"center"});
-    return;
-  }
+  submitMsg.classList.remove("warn");
 
   const data = collect();
   submitBtn.disabled = true;
